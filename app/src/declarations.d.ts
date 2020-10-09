@@ -17,7 +17,11 @@ type Car = {
 type Cars = Car[];
 
 type CarStats = {
-	avgPrice: number;
-	avgYear: number;
-	avgMileage: number;
+	price: number;
+	year: number;
+	mileage: number;
+}
+
+declare module '*lib' {
+	export const importWasm: any;
 }

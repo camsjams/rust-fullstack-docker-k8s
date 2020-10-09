@@ -1,5 +1,5 @@
 import React, {FC, useEffect, useState, useCallback, Fragment} from 'react';
-import {Table, Button} from 'react-bootstrap';
+import {Table, Button, ListGroup} from 'react-bootstrap';
 import {getCars} from '../utils/cars';
 import computeAverage from '../utils/computeAverage';
 
@@ -11,7 +11,7 @@ const Cars: FC = () => {
 			.catch((error) => console.error('Error Fetching Cars:', error));
 	}, []);
 
-	const [crunchedNumbers, setCrunched] = useState(undefined);
+	const [crunchedNumbers, setCrunched] = useState(undefined as CarStats);
 	const handleCrunchClick = useCallback((): void => {
 		computeAverage(cars)
 			.then((result: CarStats) => setCrunched(result))
@@ -27,11 +27,11 @@ const Cars: FC = () => {
 			</Button>
 			{
 				crunchedNumbers ?
-					<strong>
-						avgPrice: {crunchedNumbers.avgPrice}
-								avgYear: {crunchedNumbers.avgYear}
-								avgMileage: {crunchedNumbers.avgMileage}
-					</strong> :
+					<ListGroup>
+						<ListGroup.Item>Average Price: {crunchedNumbers.price}</ListGroup.Item>
+						<ListGroup.Item>Average Year: {crunchedNumbers.year}</ListGroup.Item>
+						<ListGroup.Item>Average Mileage: {crunchedNumbers.mileage}</ListGroup.Item>
+					</ListGroup> :
 					null
 			}
 		</p>

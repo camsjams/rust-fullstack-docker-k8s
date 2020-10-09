@@ -24,9 +24,9 @@ pub struct Cars {
 
 #[derive(Serialize, Deserialize)]
 pub struct CarStats {
-    pub avg_price: u32,
-    pub avg_year: u32,
-    pub avg_mileage: u32,
+    pub price: u32,
+    pub year: u32,
+    pub mileage: u32,
 }
 
 #[wasm_bindgen]
@@ -40,9 +40,9 @@ pub fn stats(cars: &JsValue) -> JsValue {
     let sum_mileage: u32 = cars.iter().map(|e| e.mileage).sum();
 
     let stats = CarStats {
-        avg_price: sum_price / total,
-        avg_year: sum_year / total,
-        avg_mileage: sum_mileage / total,
+        price: sum_price / total,
+        year: sum_year / total,
+        mileage: sum_mileage / total,
     };
 
     JsValue::from_serde(&stats).unwrap()

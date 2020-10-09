@@ -11,8 +11,7 @@ const config: Configuration = reduceWebpack(
 
 config.plugins.push(
 	new WasmPackPlugin({
-		crateDirectory: __dirname,
-		outDir: 'src/utils/pkg'
+		crateDirectory: __dirname
 	})
 );
 

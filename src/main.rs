@@ -25,7 +25,7 @@ async fn main() -> Result<()> {
         App::new()
             .data(db_pool.clone())
             .configure(car::init)
-            .service(Files::new("/", "./app/dist/").index_file("index.html"))
+            .service(Files::new("/", "./app/dist/public/").index_file("index.html"))
     });
 
     info!("Starting server");
