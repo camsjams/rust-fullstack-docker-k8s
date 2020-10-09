@@ -1,10 +1,10 @@
 use actix_web::{Error, HttpRequest, HttpResponse, Responder};
 use anyhow::Result;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, MySqlPool};
 use std::future::{ready, Ready};
 
-#[derive(Serialize, FromRow)]
+#[derive(Serialize, Deserialize, FromRow, Debug)]
 pub struct Car {
     pub id: u32,
     pub price: u32,

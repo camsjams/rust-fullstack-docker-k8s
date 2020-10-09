@@ -1,5 +1,6 @@
 import React, {FC} from 'react';
-import {Navbar, Nav, Form, FormControl, Button} from 'react-bootstrap';
+import {Navbar, Nav} from 'react-bootstrap';
+import Search from './Search';
 
 const MainNav: FC = () =>
 	<Navbar bg="light"
@@ -10,12 +11,7 @@ const MainNav: FC = () =>
 			<Nav className="mr-auto">
 				<Nav.Link href="/">Home</Nav.Link>
 			</Nav>
-			<Form inline>
-				<FormControl type="text"
-					placeholder="Search"
-					className="mr-sm-2" />
-				<Button variant="outline-success">Search for cars</Button>
-			</Form>
+			<Search searchHost="http://localhost:7700/indexes/cars" />
 		</Navbar.Collapse>
 	</Navbar>;
 
