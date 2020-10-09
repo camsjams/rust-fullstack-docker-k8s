@@ -1,7 +1,7 @@
 use crate::car::Car;
 use actix::prelude::*;
 use actix_redis::{Command, RedisActor};
-use actix_web::{error, get, web, Error, HttpResponse, Responder};
+use actix_web::{get, web, HttpResponse, Responder};
 use redis_async::{resp::RespValue, resp_array};
 use sqlx::mysql::MySqlPool;
 
@@ -10,53 +10,62 @@ async fn find_all(
     db_pool: web::Data<MySqlPool>,
     redis: web::Data<Addr<RedisActor>>,
 ) -> impl Responder {
-    let existing_cache = redis.send(Command(resp_array!["GET", "cars:all"])).await;
-    match existing_cache {
-        Err(e) => Err(Error::from(e)),
-        Ok(res) => match res {
-            Ok(val) => {
-                match val {
-                    RespValue::Error(err) => {
-                        return Err(error::ErrorInternalServerError(err));
-                    }
-                    RespValue::SimpleString(s) => {
-                        if let Ok(val) = serde_json::from_str(&s) {
-                            return Ok(Some((val, value)));
-                        }
-                    }
-                    RespValue::BulkString(s) => {
-                        if let Ok(val) = serde_json::from_slice(&s) {
-                            return Ok(Some((val, value)));
-                        }
-                    }
-                    _ => (),
-                }
-                Ok(None) =>
-            }
-            Err(err) => Err(error::ErrorInternalServerError(err)),
-        },
-    };
+    let res = redis
+        .send(Command(resp_array!["GET", "cars:all"]))
+        .await
+        .unwrap();
 
-    let result = Car::find_all(db_pool.get_ref()).await;
-    match result {
-        Ok(cars) => {
-            let redis_string = serde_json::to_string(&cars).unwrap();
-            let save_result = redis
-                .send(Command(resp_array![
-                    "SET",
-                    "cars:all",
-                    redis_string,
-                    "EX",
-                    "300"
-                ]))
-                .await;
-
-            match save_result {
-                _ => HttpResponse::Ok().json(cars),
+    let existing_cache: Option<Vec<Car>> = match res {
+        Ok(RespValue::SimpleString(s)) => {
+            println!("SimpleString response");
+            if let Ok(val) = serde_json::from_str(&s) {
+                Some(val)
+            } else {
+                None
             }
         }
+        Ok(RespValue::BulkString(s)) => {
+            println!("BulkString response");
+            if let Ok(val) = serde_json::from_slice(&s) {
+                Some(val)
+            } else {
+                None
+            }
+        }
+        _ => None,
+    };
 
-        Err(_) => HttpResponse::BadRequest().body("Cars not found"),
+    match existing_cache {
+        // cache found
+        Some(cars) => {
+            info!("Using Cars from Cache");
+            HttpResponse::Ok().json(cars)
+        }
+        // No cache
+        None => {
+            info!("Using Cars from Database");
+            let result = Car::find_all(db_pool.get_ref()).await;
+            match result {
+                Ok(cars) => {
+                    let redis_string = serde_json::to_string(&cars).unwrap();
+                    let save_result = redis
+                        .send(Command(resp_array![
+                            "SET",
+                            "cars:all",
+                            redis_string,
+                            "EX",
+                            "300"
+                        ]))
+                        .await;
+
+                    match save_result {
+                        _ => HttpResponse::Ok().json(cars),
+                    }
+                }
+
+                Err(_) => HttpResponse::BadRequest().body("Cars not found"),
+            }
+        }
     }
 }
 

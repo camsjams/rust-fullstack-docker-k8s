@@ -33,7 +33,7 @@ impl Car {
         let mut cars = vec![];
         let recs = sqlx::query!(
             r#"
-                SELECT id, price, year, mileage, make, model, color, state
+                SELECT id, price, mileage, make, model, color, state
                     FROM car
                 ORDER BY id
             "#

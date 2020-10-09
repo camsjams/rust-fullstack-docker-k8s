@@ -106,6 +106,7 @@ class Search extends PureComponent<Props, State> {
 				<Modal.Body>
 					<Form inline>
 						<FormControl
+							autoFocus
 							onChange={this.handleSearchChange}
 							type="text"
 							value={value}
