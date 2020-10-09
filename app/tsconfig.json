@@ -1,0 +1,19 @@
+{
+  "include": [
+    "./src/**/*",
+    "webpack.config.ts"
+  ],
+  "compilerOptions": {
+    "jsx": "react",
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "es6",
+    "noImplicitAny": true,
+    "moduleResolution": "node",
+    "sourceMap": true,
+    "skipLibCheck": true,
+    "outDir": "dist",
+    "baseUrl": "."
+  }
+}

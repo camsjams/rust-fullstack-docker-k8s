@@ -1,0 +1,16 @@
+/target
+# Logs
+logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+
+node_modules
+dist
+pad
+pkg
+/wasm-pack.log
+app/target

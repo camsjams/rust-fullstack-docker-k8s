@@ -1,0 +1,32 @@
+[package]
+name = "app"
+version = "0.1.0"
+authors = ["Cameron Manavian <cameron.manavian@gmail.com>"]
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib"]
+
+[profile.release]
+# This makes the compiled code faster and smaller, but it makes compiling slower,
+# so it's only enabled in release mode.
+lto = true
+
+[features]
+# If you uncomment this line, it will enable `wee_alloc`:
+default = ["wee_alloc"]
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_derive = "1.0.80"
+serde_json = "1.0.51"
+wasm-bindgen = { version = "0.2", features = ["serde-serialize"] }
+
+wee_alloc = { version = "0.4.2", optional = true }
+
+[dependencies.web-sys]
+version = "0.3.22"
+features = ["console"]
+
+[target."cfg(debug_assertions)".dependencies]
+console_error_panic_hook = "0.1.5"

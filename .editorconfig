@@ -1,0 +1,34 @@
+# EditorConfig helps developers define and maintain consistent
+# coding styles between different editors and IDEs
+# editorconfig.org
+
+root = true
+
+[*]
+indent_style = tab
+indent_size = 4
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.toml]
+indent_style = space
+indent_size = 4
+
+[{*.json, *.svg}]
+indent_style = space
+indent_size = 4
+
+[{*.yml,*.scss,*.css,*rc}]
+indent_style = space
+indent_size = 2
+
+[*.rs]
+indent_style = space
+indent_size = 4
+
+# Matches the exact package.json, *.scss, *.css, or *.yml
+[{package.json,*.yml,*.yaml,*.scss,*.css,*rc, *snyk}]
+indent_style = space
+indent_size = 2
