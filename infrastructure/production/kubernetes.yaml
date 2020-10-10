@@ -38,7 +38,7 @@ spec:
           workingDir: /var/www
           image: us.gcr.io/rust-fullstack-demo/rust-fullstack:0.1.0
           ports:
-          - containerPort: 3000
+          - containerPort: 2020
           resources:
             requests:
               cpu: 10m
@@ -48,7 +48,7 @@ spec:
             failureThreshold: 3
             httpGet:
               path: /ping
-              port: 3000
+              port: 2020
               scheme: HTTP
             initialDelaySeconds: 5
             periodSeconds: 10
@@ -59,30 +59,30 @@ spec:
             failureThreshold: 3
             httpGet:
               path: /ping
-              port: 3000
+              port: 2020
               scheme: HTTP
             initialDelaySeconds: 5
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 1
         - name: search
-            image: getmeili/meilisearch:v0.13.0
-            ports:
-            - containerPort: 7700
-            resources:
-              requests:
-                cpu: 50m
-                memory: 200Mi
-            volumeMounts:
-              - name: meilisearch-persistent-storage
-                mountPath: /data.ms
+          image: getmeili/meilisearch:v0.13.0
+          ports:
+          - containerPort: 7700
+          resources:
+            requests:
+              cpu: 50m
+              memory: 200Mi
+          volumeMounts:
+            - name: meilisearch-persistent-storage
+              mountPath: /data.ms
         - name: redis
           image: redis
           ports:
           - containerPort: 6379
           resources:
             requests:
-              cpu: 50m
+              cpu: 25m
               memory: 200Mi
         - name: mysql
           image: mysql:5.7.30
@@ -134,31 +134,6 @@ spec:
           persistentVolumeClaim:
             claimName: search-volumeclaim-v1
 ---
-apiVersion: cloud.google.com/v1beta1
-kind: BackendConfig
-metadata:
-  name: rust-fullstack-backendconfig
-spec:
-  timeoutSec: 86401
-  sessionAffinity:
-    affinityType: "CLIENT_IP"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: mysql-svc
-  labels:
-    app: mysql-svc
-spec:
-  type: LoadBalancer
-  selector:
-    app: rust-fullstack
-    tier: backend
-  ports:
-  - protocol: TCP
-    targetPort: 3306
-    port: 3306
----
 apiVersion: v1
 kind: Service
 metadata:
@@ -179,6 +154,26 @@ spec:
     app: rust-fullstack
     tier: backend
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rust-search-svc
+  namespace: default
+  labels:
+    app: rust-search-svc
+    tier: backend
+    resourceName: fullstack
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+    name: search-port
+    targetPort: 7700
+    protocol: TCP
+  selector:
+    app: search
+    tier: backend
+---
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
@@ -191,11 +186,18 @@ spec:
   tls:
   - hosts:
     - fullstack.cameronmanavian.com
-    secretName: rust-fullstack-staging-tls
+    secretName: rust-fullstack-tls
   backend:
     serviceName: rust-fullstack-svc
     servicePort: 80
   rules:
+  - host: fullstack.cameronmanavian.com
+    http:
+      paths:
+      - path: /search*
+        backend:
+          serviceName: rust-search-svc
+          servicePort: 80
   - host: fullstack.cameronmanavian.com
     http:
       paths:

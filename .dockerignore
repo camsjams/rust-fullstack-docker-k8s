@@ -1,0 +1,12 @@
+.git
+.gitignore
+.editorconfig
+node_modules
+target
+*.log
+*.md
+pad
+app/dist
+app/node_modules
+app/pkg
+app/target
