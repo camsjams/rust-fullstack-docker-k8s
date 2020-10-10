@@ -29,8 +29,8 @@ const App: FC = () => {
 						<li>React for front end code</li>
 						<li>Bootstrap for styling because it was easy to add in</li>
 						<li>Actix for speedy type-safe web serving</li>
-						<li>sqlx for speedy type-safe MySQL connections</li>
-						<li>MeiliSearch for searching because its an awesome Rust based search engine</li>
+						<li>SQLx for speedy type-safe MySQL connections</li>
+						<li>MeiliSearch for searching because its an awesome Rust-based search engine</li>
 						<li>WebAssembly to do some type-safe reliable number crunching</li>
 					</ul>
 				</p>
@@ -51,6 +51,13 @@ const App: FC = () => {
 					<Cars /> :
 					null
 			}
+		</Container>
+		<Container as="footer">
+			<p>
+				<small>
+					See also the <a href="https://github.com/camsjams/rust-fullstack-docker-k8s">GitHub repo</a>
+				</small>
+			</p>
 		</Container>
 	</Fragment>;
 };
