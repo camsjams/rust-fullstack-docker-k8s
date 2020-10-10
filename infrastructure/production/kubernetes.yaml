@@ -1,0 +1,205 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: mysql-volumeclaim-v1
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: search-volumeclaim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: rust-fullstack
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: rust-fullstack
+        tier: backend
+        environment: production
+    spec:
+      containers:
+        - name: rust-fullstack-container
+          workingDir: /var/www
+          image: us.gcr.io/rust-fullstack-demo/rust-fullstack:0.1.0
+          ports:
+          - containerPort: 3000
+          resources:
+            requests:
+              cpu: 10m
+              memory: 50Mi
+          # detect when application can be sent traffic after deployment
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /ping
+              port: 3000
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          # detect when application needs to be restarted
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /ping
+              port: 3000
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+        - name: search
+            image: getmeili/meilisearch:v0.13.0
+            ports:
+            - containerPort: 7700
+            resources:
+              requests:
+                cpu: 50m
+                memory: 200Mi
+            volumeMounts:
+              - name: meilisearch-persistent-storage
+                mountPath: /data.ms
+        - name: redis
+          image: redis
+          ports:
+          - containerPort: 6379
+          resources:
+            requests:
+              cpu: 50m
+              memory: 200Mi
+        - name: mysql
+          image: mysql:5.7.30
+          env:
+          - name: MYSQL_ROOT_PASSWORD
+            value: todochangerootpassword
+          - name: MYSQL_DATABASE
+            value: rust_fullstack
+          - name: MYSQL_USER
+            value: user
+          - name: MYSQL_PASSWORD
+            value: todochangepassword
+          ports:
+          - name: mysql
+            containerPort: 3306
+          securityContext:
+            allowPrivilegeEscalation: false
+          volumeMounts:
+          - name: mysql-persistent-storage
+            mountPath: /var/lib/mysql
+            subPath: mysql
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+          livenessProbe:
+            exec:
+              command:
+              - sh
+              - -c
+              - "mysqladmin ping -u root -p${MYSQL_ROOT_PASSWORD}"
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            exec:
+              command:
+              - sh
+              - -c
+              - "mysqladmin ping -u root -p${MYSQL_ROOT_PASSWORD}"
+            initialDelaySeconds: 5
+            periodSeconds: 2
+            timeoutSeconds: 1
+      volumes:
+        - name: mysql-persistent-storage
+          persistentVolumeClaim:
+            claimName: mysql-volumeclaim
+        - name: meilisearch-persistent-storage
+          persistentVolumeClaim:
+            claimName: search-volumeclaim-v1
+---
+apiVersion: cloud.google.com/v1beta1
+kind: BackendConfig
+metadata:
+  name: rust-fullstack-backendconfig
+spec:
+  timeoutSec: 86401
+  sessionAffinity:
+    affinityType: "CLIENT_IP"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-svc
+  labels:
+    app: mysql-svc
+spec:
+  type: LoadBalancer
+  selector:
+    app: rust-fullstack
+    tier: backend
+  ports:
+  - protocol: TCP
+    targetPort: 3306
+    port: 3306
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rust-fullstack-svc
+  namespace: default
+  labels:
+    app: rust-fullstack-svc
+    tier: backend
+    resourceName: fullstack
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+    name: fullstack-port
+    targetPort: 2020
+    protocol: TCP
+  selector:
+    app: rust-fullstack
+    tier: backend
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: rust-fullstack-ingress
+  namespace: default
+  annotations:
+    kubernetes.io/tls-acme: "true"
+    kubernetes.io/ingress.class: "gce"
+spec:
+  tls:
+  - hosts:
+    - fullstack.cameronmanavian.com
+    secretName: rust-fullstack-staging-tls
+  backend:
+    serviceName: rust-fullstack-svc
+    servicePort: 80
+  rules:
+  - host: fullstack.cameronmanavian.com
+    http:
+      paths:
+      - path: /*
+        backend:
+          serviceName: rust-fullstack-svc
+          servicePort: 80

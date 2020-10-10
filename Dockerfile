@@ -10,6 +10,17 @@ RUN apt-get update && apt-get -y install pkg-config libssl-dev node
 
 RUN cargo fetch
 
+WORKDIR /var/rfs/app
+
+# install all node dependencies
+RUN NODE_ENV=development npm install --no-optional
+
+# build web
+RUN NODE_ENV=production npm run build
+
+WORKDIR /var/rfs/
+
+# build server
 RUN cargo build --release
 
 ################
@@ -26,8 +37,7 @@ RUN groupadd --gid 1000 rust \
 RUN chown -R rust:rust /var/rfs
 
 COPY --from=builder /var/rfs/target/release/rust_fullstack_docker_k8s .
-COPY --from=builder /var/rfs/config/ config
-RUN mkdir ./artifacts
+COPY --from=builder /var/rfs/app/dist app/dist
 
 USER rust
 
