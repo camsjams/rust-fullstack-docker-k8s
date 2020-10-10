@@ -4,7 +4,7 @@ extern crate log;
 
 use actix_files::Files;
 use actix_redis::RedisActor;
-use actix_web::{middleware, App, HttpServer};
+use actix_web::{middleware, web, App, HttpRequest, HttpServer, Responder};
 use anyhow::Result;
 use dotenv::dotenv;
 use meilisearch_sdk::client::*;
@@ -12,6 +12,14 @@ use sqlx::mysql::MySqlPool;
 use std::env;
 
 mod car;
+
+async fn ping(_req: HttpRequest) -> impl Responder {
+    format!(
+        "I am healthy: {} v{}",
+        env!("CARGO_PKG_DESCRIPTION"),
+        env!("CARGO_PKG_VERSION")
+    )
+}
 
 #[actix_web::main]
 async fn main() -> Result<()> {
@@ -35,6 +43,7 @@ async fn main() -> Result<()> {
             .data(RedisActor::start(redis_url.clone()))
             .wrap(middleware::Logger::default())
             .configure(car::init)
+            .route("/ping", web::get().to(ping))
             .service(Files::new("/", "./app/dist/public/").index_file("index.html"))
     });
 

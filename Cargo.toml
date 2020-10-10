@@ -1,5 +1,6 @@
 [package]
 name = "rust_fullstack_docker_k8s"
+description = "Rust Fullstack Docker K8s"
 version = "0.1.0"
 authors = ["Cameron Manavian <cameron.manavian@gmail.com>"]
 edition = "2018"
