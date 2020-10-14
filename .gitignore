@@ -14,3 +14,4 @@ pad
 pkg
 /wasm-pack.log
 app/target
+.env
