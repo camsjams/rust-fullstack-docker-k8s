@@ -2,7 +2,7 @@ use actix_web::{Error, HttpRequest, HttpResponse, Responder};
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, MySqlPool};
-use std::future::{ready, Ready};
+use futures::future::{ready, Ready};
 
 #[derive(Serialize, Deserialize, FromRow, Debug)]
 pub struct Car {

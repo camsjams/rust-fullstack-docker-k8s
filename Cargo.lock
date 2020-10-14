@@ -2116,6 +2116,7 @@ dependencies = [
  "anyhow",
  "dotenv",
  "env_logger",
+ "futures",
  "log",
  "meilisearch-sdk",
  "redis-async",

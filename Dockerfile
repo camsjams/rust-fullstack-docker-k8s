@@ -1,4 +1,5 @@
-FROM rust:1.47.0-slim-buster as builder
+FROM camsjams/rust-slim-buster-node:1.47.0-14 as builder
+# ^ this image installs Node and wasm-pack on top of rust:1.47.0-slim-buster
 
 # copy files from this directory '.' to '/var/www'
 ADD . /var/www
@@ -6,14 +7,7 @@ ADD . /var/www
 # set cwd for RUN and CMD
 WORKDIR /var/www
 
-RUN apt-get update \
-	&& apt-get -y install pkg-config libssl-dev curl \
-	&& curl -sL https://deb.nodesource.com/setup_14.x | bash - \
-	&& apt-get install -y nodejs
-
 RUN cargo fetch
-
-RUN curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 
 WORKDIR /var/www/app
 

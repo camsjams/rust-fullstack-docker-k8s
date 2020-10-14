@@ -1,4 +1,3 @@
-#![feature(future_readiness_fns)]
 #[macro_use]
 extern crate log;
 
@@ -26,13 +25,13 @@ async fn main() -> Result<()> {
     dotenv().ok();
     env_logger::init();
 
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL is not set in .env file");
-    let redis_url = env::var("REDIS_URL").expect("REDIS_URL is not set in .env file");
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL is not set");
+    let redis_url = env::var("REDIS_URL").expect("REDIS_URL is not set");
+    let host = env::var("HOST").expect("HOST is not set");
+    let port = env::var("PORT").expect("PORT is not set");
+    let meilisearch_url = env::var("MEILISEARCH_URL").expect("MEILISEARCH_URL is not set");
     let db_pool = MySqlPool::new(&database_url).await?;
-    let host = env::var("HOST").expect("HOST is not set in .env file");
-    let port = env::var("PORT").expect("PORT is not set in .env file");
-
-    let client = Client::new("http://localhost:7700", "masterKey");
+    let client = Client::new(&meilisearch_url, "masterKey");
     info!("Indexing Search");
     car::fixtures(client, &db_pool.clone()).await?;
     info!("Search Ready");

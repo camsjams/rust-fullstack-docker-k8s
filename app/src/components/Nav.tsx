@@ -11,7 +11,7 @@ const MainNav: FC = () =>
 			<Nav className="mr-auto">
 				<Nav.Link href="/">Home</Nav.Link>
 			</Nav>
-			<Search searchHost="http://localhost:7700/indexes/cars" />
+			<Search searchHost="/indexes/cars/search" />
 		</Navbar.Collapse>
 	</Navbar>;
 

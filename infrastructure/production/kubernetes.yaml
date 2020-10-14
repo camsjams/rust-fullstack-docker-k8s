@@ -194,7 +194,7 @@ spec:
   - host: fullstack.cameronmanavian.com
     http:
       paths:
-      - path: /search*
+      - path: /indexes*
         backend:
           serviceName: rust-search-svc
           servicePort: 80

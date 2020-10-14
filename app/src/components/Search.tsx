@@ -71,7 +71,7 @@ class Search extends PureComponent<Props, State> {
 	}
 
 	async runSearch(value: string): Promise<void> {
-		const response = await fetch(`${this.props.searchHost}/search?q=${value}&attributesToHighlight=*`);
+		const response = await fetch(`${this.props.searchHost}?q=${value}&attributesToHighlight=*`);
 		if (response.ok) {
 			const json = await response.json();
 			this.setState({
