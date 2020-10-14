@@ -2,10 +2,10 @@
 Rust Fullstack Docker K8s - Rust Fullstack Application running on Docker and Kubernetes
 
 ## Version
-See [Cargo.toml] version
+See [Cargo.toml](Cargo.toml) version
 
 ## Demo
-Coming Soon
+See [live demo here](https://fullstack.cameronmanavian.com/)
 
 ## Walkthrough
 This repo and accompanying information will be presented at [RustLab 2020](https://www.rustlab.it/agenda/session/330894)
@@ -16,7 +16,8 @@ This repo and accompanying information will be presented at [RustLab 2020](https
 * [Actix](https://actix.rs/)
 * [Docker](https://www.docker.com/)
 * [Kubernetes](https://kubernetes.io/)
-* [MeiliSearch](https://www.meilisearch.com/
+* [MeiliSearch](https://www.meilisearch.com/)
+* [Okteto](https://okteto.com/)
 
 
 ## Build

@@ -1,13 +1,13 @@
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: mysql-volumeclaim-v1
+  name: mysql-volumeclaim
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 10Gi
+      storage: 3Gi
 ---
 kind: PersistentVolumeClaim
 apiVersion: v1
@@ -18,14 +18,17 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 10Gi
+      storage: 2Gi
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: rust-fullstack
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: rust-fullstack
   template:
     metadata:
       labels:
@@ -36,7 +39,20 @@ spec:
       containers:
         - name: rust-fullstack-container
           workingDir: /var/www
-          image: us.gcr.io/rust-fullstack-demo/rust-fullstack:0.1.0
+          image: camsjams/rust_fullstack_docker_k8s:0.1.0
+          env:
+            - name: HOST
+              value: "0.0.0.0"
+            - name: PORT
+              value: "2020"
+            - name: DATABASE_URL
+              value: "mysql://user:todochangepassword@localhost:3306/rust_fullstack"
+            - name: REDIS_URL
+              value: localhost:6379
+            - name: MEILISEARCH_URL
+              value: http://localhost:7700
+            - name: RUST_LOG
+              value: rust_fullstack_docker_k8s=info,actix=info
           ports:
           - containerPort: 2020
           resources:
@@ -44,27 +60,27 @@ spec:
               cpu: 10m
               memory: 50Mi
           # detect when application can be sent traffic after deployment
-          readinessProbe:
-            failureThreshold: 3
-            httpGet:
-              path: /ping
-              port: 2020
-              scheme: HTTP
-            initialDelaySeconds: 5
-            periodSeconds: 10
-            successThreshold: 1
-            timeoutSeconds: 1
-          # detect when application needs to be restarted
-          livenessProbe:
-            failureThreshold: 3
-            httpGet:
-              path: /ping
-              port: 2020
-              scheme: HTTP
-            initialDelaySeconds: 5
-            periodSeconds: 10
-            successThreshold: 1
-            timeoutSeconds: 1
+          # readinessProbe:
+          #   failureThreshold: 3
+          #   httpGet:
+          #     path: /ping
+          #     port: 2020
+          #     scheme: HTTP
+          #   initialDelaySeconds: 5
+          #   periodSeconds: 10
+          #   successThreshold: 1
+          #   timeoutSeconds: 1
+          # # detect when application needs to be restarted
+          # livenessProbe:
+          #   failureThreshold: 3
+          #   httpGet:
+          #     path: /ping
+          #     port: 2020
+          #     scheme: HTTP
+          #   initialDelaySeconds: 5
+          #   periodSeconds: 10
+          #   successThreshold: 1
+          #   timeoutSeconds: 1
         - name: search
           image: getmeili/meilisearch:v0.13.0
           ports:
@@ -87,14 +103,14 @@ spec:
         - name: mysql
           image: mysql:5.7.30
           env:
-          - name: MYSQL_ROOT_PASSWORD
-            value: todochangerootpassword
-          - name: MYSQL_DATABASE
-            value: rust_fullstack
-          - name: MYSQL_USER
-            value: user
-          - name: MYSQL_PASSWORD
-            value: todochangepassword
+            - name: MYSQL_ROOT_PASSWORD
+              value: todochangerootpassword
+            - name: MYSQL_DATABASE
+              value: rust_fullstack
+            - name: MYSQL_USER
+              value: user
+            - name: MYSQL_PASSWORD
+              value: todochangepassword
           ports:
           - name: mysql
             containerPort: 3306
@@ -132,19 +148,20 @@ spec:
             claimName: mysql-volumeclaim
         - name: meilisearch-persistent-storage
           persistentVolumeClaim:
-            claimName: search-volumeclaim-v1
+            claimName: search-volumeclaim
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: rust-fullstack-svc
-  namespace: default
   labels:
     app: rust-fullstack-svc
     tier: backend
     resourceName: fullstack
+  annotations:
+    dev.okteto.com/auto-ingress: "private"
 spec:
-  type: NodePort
+  type: ClusterIP
   ports:
   - port: 80
     name: fullstack-port
@@ -157,51 +174,73 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
+  name: rust-redis-svc
+  labels:
+    app: rust-redis-svc
+    tier: backend
+  annotations:
+    dev.okteto.com/auto-ingress: "private"
+spec:
+  type: ClusterIP
+  ports:
+  - port: 6379
+    targetPort: 6379
+    protocol: TCP
+  selector:
+    app: rust-fullstack
+    tier: backend
+---
+apiVersion: v1
+kind: Service
+metadata:
   name: rust-search-svc
-  namespace: default
   labels:
     app: rust-search-svc
     tier: backend
-    resourceName: fullstack
+  annotations:
+    dev.okteto.com/auto-ingress: "private"
 spec:
-  type: NodePort
+  type: ClusterIP
   ports:
   - port: 80
     name: search-port
     targetPort: 7700
     protocol: TCP
   selector:
-    app: search
+    app: rust-fullstack
     tier: backend
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-svc
+  labels:
+    app: mysql-svc
+spec:
+  type: NodePort
+  selector:
+    app: rust-fullstack
+    tier: backend
+  ports:
+  - protocol: TCP
+    targetPort: 3306
+    port: 3306
 ---
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: rust-fullstack-ingress
-  namespace: default
+  name: rust-fullstack
   annotations:
-    kubernetes.io/tls-acme: "true"
-    kubernetes.io/ingress.class: "gce"
+    dev.okteto.com/generate-host: "true"
 spec:
-  tls:
-  - hosts:
-    - fullstack.cameronmanavian.com
-    secretName: rust-fullstack-tls
-  backend:
-    serviceName: rust-fullstack-svc
-    servicePort: 80
   rules:
-  - host: fullstack.cameronmanavian.com
-    http:
+  - http:
       paths:
-      - path: /indexes*
+      - path: /indexes/cars/search
         backend:
           serviceName: rust-search-svc
           servicePort: 80
-  - host: fullstack.cameronmanavian.com
-    http:
-      paths:
-      - path: /*
+      - path: /
         backend:
           serviceName: rust-fullstack-svc
           servicePort: 80
